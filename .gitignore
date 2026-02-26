@@ -1,0 +1,17 @@
+# Java
+target/
+*.class
+.mvn/
+
+# Python
+__pycache__/
+venv/
+.env
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+
+# Data 
+# analysis_results.jsonl 
