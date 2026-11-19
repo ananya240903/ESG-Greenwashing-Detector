@@ -89,6 +89,25 @@ services:
   analyzer-worker:
     <<: *worker
     command: ["python", "-m", "esg.workers.analyzer_worker"]
+    volumes:
+      - reports:/data/reports
+      - hf-cache:/models
+      # Fine-tuned claim/specificity classifiers from scripts/train_classifier.py
+      - ./nlp-analyzer/models:/app/models:ro
+
+  # One-off jobs on the worker image, with the code mounted so results land on the host:
+  #   docker compose run --rm tools python -m scripts.train_classifier --task claims
+  #   docker compose run --rm tools python -m scripts.evaluate
+  #   docker compose run --rm tools python -m pytest -m eval
+  tools:
+    <<: *worker
+    profiles: ["tools"]
+    restart: "no"
+    depends_on: !reset {}
+    command: ["python", "-m", "pytest"]
+    volumes:
+      - hf-cache:/models
+      - ./nlp-analyzer:/app
 
 volumes:
   pgdata:
