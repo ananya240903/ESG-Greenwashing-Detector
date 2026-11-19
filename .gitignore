@@ -14,4 +14,9 @@ venv/
 .vscode/
 
 # Data 
-# analysis_results.jsonl 
+.venv/
+.pytest_cache/
+
+# Data: uploaded/downloaded PDFs and generated output stay out of git
+data/
+*.jsonl

@@ -1,30 +1,53 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import json
+"""Bar chart of the FinBERT baseline's average risk score per company, read from Postgres.
 
-# 1. Load the data
-data = []
-with open("analysis_results.jsonl", "r") as f:
-    for line in f:
-        data.append(json.loads(line))
+    python report_generator.py            # writes esg_report.png
+"""
 
-df = pd.DataFrame(data)
+import matplotlib
 
-# 2. Group by company and get the average Risk Score
-report = df.groupby('company')['risk_score'].mean().sort_values(ascending=False)
+matplotlib.use("Agg")
 
-# 3. Create the Plot
-plt.figure(figsize=(10, 6))
-report.plot(kind='bar', color=['red' if x > 50 else 'green' for x in report])
+import matplotlib.pyplot as plt  # noqa: E402
+import pandas as pd  # noqa: E402
 
-plt.title('Greenwashing Risk Analysis by Company', fontsize=14)
-plt.xlabel('Company Name', fontsize=12)
-plt.ylabel('Average Risk Score (0-100)', fontsize=12)
-plt.axhline(y=50, color='gray', linestyle='--', label='Warning Threshold')
-plt.legend()
-plt.grid(axis='y', linestyle='--', alpha=0.7)
+from esg import db  # noqa: E402
 
-# 4. Save and Show
-plt.savefig('esg_report.png')
-print("Graph saved as esg_report.png!")
-plt.show()
+QUERY = """
+SELECT r.company || ' ' || r.fiscal_year AS report,
+       avg(b.risk_score)                 AS risk_score,
+       avg(b.flagged::int) * 100         AS flagged_pct
+FROM baseline_scores b
+JOIN chunks  c ON c.id = b.chunk_id
+JOIN reports r ON r.id = c.report_id
+GROUP BY r.company, r.fiscal_year
+ORDER BY risk_score DESC
+"""
+
+
+def main() -> None:
+    with db.connect(retries=1) as conn:
+        rows = conn.execute(QUERY).fetchall()
+    if not rows:
+        print("No analysed reports yet. Upload one and wait for status ANALYZED.")
+        return
+
+    df = pd.DataFrame(rows).set_index("report")
+    print(df.round(1).to_string())
+
+    ax = df["risk_score"].plot(
+        kind="bar", figsize=(10, 6),
+        color=["#c0392b" if x > 50 else "#27ae60" for x in df["risk_score"]],
+    )
+    ax.axhline(50, color="gray", linestyle="--", label="Warning threshold")
+    ax.set_title("Greenwashing risk by report (FinBERT baseline)")
+    ax.set_xlabel("")
+    ax.set_ylabel("Average chunk risk score (0-100)")
+    ax.legend()
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.tight_layout()
+    plt.savefig("esg_report.png")
+    print("Saved esg_report.png")
+
+
+if __name__ == "__main__":
+    main()
