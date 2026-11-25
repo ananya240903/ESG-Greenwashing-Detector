@@ -3,10 +3,11 @@
 Reads Indian BRSR (Business Responsibility and Sustainability Report) PDFs and checks whether a
 company's environmental claims are backed by evidence in the same report.
 
-> **Status:** Phases 1 (foundation) and 2 (claims) are done. The pipeline parses real BRSR PDFs
-> into section-aware chunks, embeds them, and extracts environmental claims with fine-tuned
-> classifiers that score how specific each claim is. The original FinBERT heuristic is kept as
-> the baseline, and an evaluation harness compares them. Evidence retrieval and verdicts come next.
+> **Status:** Phases 1–3 are done. The pipeline parses real BRSR PDFs into section-aware chunks,
+> extracts environmental claims with fine-tuned classifiers, retrieves evidence for each claim
+> from the same report, and labels it substantiated, vague or unsupported with a cited reason.
+> Every stage is measured, against public datasets and a hand-labelled BRSR gold set, alongside
+> the original FinBERT heuristic as the baseline. A dashboard comes next.
 
 ## Architecture
 
@@ -15,9 +16,9 @@ company's environmental claims are backed by evidence in the same report.
                     │
              ┌──────▼───────┐   report.uploaded   ┌───────────────┐   report.parsed   ┌─────────────────┐
              │ ingestor-api │ ──────────────────▶ │ parser-worker │ ────────────────▶ │ analyzer-worker │
-             │ Spring Boot  │      (Kafka)        │ PyMuPDF, bge  │      (Kafka)      │ claims + spec.  │
+             │ Spring Boot  │      (Kafka)        │ PyMuPDF, bge  │      (Kafka)      │ claims, verdicts│
              └──────┬───────┘                     └───────┬───────┘                   └────────┬────────┘
-                    └────────────── Postgres + pgvector (reports, chunks, scores) ─────────────┘
+                    └────────────── Postgres + pgvector (chunks, claims, verdicts) ────────────┘
 ```
 
 - **ingestor-api** (Java 17, Spring Boot 3): accepts the PDF upload, stores the file, records a
@@ -25,10 +26,12 @@ company's environmental claims are backed by evidence in the same report.
 - **parser-worker** (Python): extracts text and tables with PyMuPDF, splits them by BRSR section
   (A, B, C) and principle (1–9), then embeds each chunk with `BAAI/bge-small-en-v1.5`.
 - **analyzer-worker** (Python): finds environmental claim sentences and scores how specific each
-  one is, with two fine-tuned ClimateBERT classifiers; also scores each chunk with the original
-  FinBERT heuristic (`yiyanghkust/finbert-esg` + `ProsusAI/finbert`) as the baseline.
+  one is, with two fine-tuned ClimateBERT classifiers. For each claim it retrieves evidence from
+  the same report (BM25 + pgvector, fused, then a cross-encoder reranker) and gives a verdict with
+  an NLI model and a few explicit rules. It also scores each chunk with the original FinBERT
+  heuristic (`yiyanghkust/finbert-esg` + `ProsusAI/finbert`) as the baseline.
 - **Postgres + pgvector**: one schema for everything ([db/init/001_schema.sql](db/init/001_schema.sql)),
-  including the tables for the claims, evidence and verdicts that later phases will fill.
+  plus the `report_risk` view ([db/init/002_report_risk.sql](db/init/002_report_risk.sql)).
 
 Parsing and inference run as separate workers, so a slow model never holds up parsing, and each
 worker type can be scaled on its own (each topic has three partitions).
@@ -139,9 +142,53 @@ trained on paragraphs, and single sentences score lower: *"source 100% renewable
 scores 0.46. The worker stores the raw scores, and the cut-off between specific and vague is
 calibrated in Phase 3 against the gold set.
 
+## Verification on the BRSR gold set
+
+200 claim sentences from the five reports were hand-labelled: is it really an environmental claim,
+is it substantiated, vague or unsupported, and which passages back it. Test numbers are on
+held-out claims; thresholds were tuned on a separate dev split. Full tables, with confidence
+intervals and the confusion matrix: [nlp-analyzer/eval/gold_metrics.md](nlp-analyzer/eval/gold_metrics.md).
+
+| Stage | Result |
+|---|---|
+| Claim extraction: share of extracted sentences that are real claims | 0.73 (95% CI 0.66–0.78) |
+| Retrieval: a supporting passage in the top 3 (81 substantiated claims) | **0.91** with the reranker; 0.84 BM25, 0.83 vector |
+| Verdicts: macro F1 over the three labels (87 test claims) | 0.39–0.48 by rule variant; FinBERT baseline 0.26, majority class 0.23 |
+
+What this shows:
+
+- **Retrieval works.** Fusing BM25 with vector search and reranking finds the backing passage
+  for 9 in 10 substantiated claims; the reranker lifts hit@3 from 0.86 (fused) to 0.91.
+- **Verdicts are the weak stage.** Every variant beats the baseline, but none is reliable. The
+  NLI model barely separates substantiated from unsupported claims (ROC AUC 0.62), largely because
+  much of the evidence is tables of figures, which NLI models are not trained on. The rule
+  selected on dev (evidence first, with NLI or reranker relevance counting as support) is
+  generous with "substantiated" and rarely calls a claim vague.
+- **The labels have limits.** One person labelled everything, at a median of 16 seconds per
+  claim. A second pass over the test claims agreed with the first on 84% (Cohen's kappa 0.73),
+  so the labels are consistent, but they were not checked carefully against every passage.
+
+### Risk scores
+
+The share of each report's claims that are vague or unsupported, weighted so that headline
+claims in Section B count 1.5x. Given the verdict stage's bias towards "substantiated", treat
+these as lower bounds for comparing reports, not as findings about the companies.
+
+| Report | Claims | Substantiated | Vague | Unsupported | Risk score |
+|---|---|---|---|---|---|
+| HUL | 185 | 146 | 19 | 20 | 20.0 |
+| Axis Bank | 42 | 30 | 1 | 11 | 28.6 |
+| Tata Steel | 143 | 100 | 20 | 23 | 29.3 |
+| Wipro | 28 | 15 | 6 | 7 | 46.4 |
+| NTPC | 25 | 13 | 5 | 7 | 48.0 |
+
 ## Roadmap
 
 1. **Foundation**: Postgres instead of H2 and `.jsonl`, one docker-compose, PDF parsing *(done)*
 2. **Claims**: fine-tuned claim and specificity classifiers, evaluation harness, baseline numbers *(done)*
-3. **Verification**: evidence retrieval (BM25 + pgvector + reranker), verdict model, hand-labelled gold set
+3. **Verification**: evidence retrieval (BM25 + pgvector + reranker), verdict model, hand-labelled gold set *(done)*
 4. **Surface**: dashboard, and a worked example with a metrics table
+
+Next steps for the verdict stage, in order of expected gain: a careful second labeller to measure
+agreement properly; a numeric check that matches figures in a claim against the report's tables
+(the "words versus numbers" check in the plan); and an LLM judge as a comparison.

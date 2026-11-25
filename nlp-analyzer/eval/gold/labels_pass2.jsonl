@@ -1,0 +1,87 @@
+{"key": "Hindustan Unilever|2024|84|839", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:49:43"}
+{"key": "Tata Steel|2024|277|129", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E3"], "note": "", "labelled_at": "2026-11-20T15:50:00"}
+{"key": "NTPC|2024|136|581", "is_claim": true, "verdict": "substantiated", "supporting": ["E4", "E5"], "note": "", "labelled_at": "2026-11-20T15:50:19"}
+{"key": "Axis Bank|2024|60|1296", "is_claim": true, "verdict": "substantiated", "supporting": ["E1"], "note": "", "labelled_at": "2026-11-20T15:50:35"}
+{"key": "Wipro|2024|123|0", "is_claim": true, "verdict": "substantiated", "supporting": ["E4"], "note": "", "labelled_at": "2026-11-20T15:50:55"}
+{"key": "Hindustan Unilever|2024|3|1152", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:51:03"}
+{"key": "NTPC|2024|136|944", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:51:17"}
+{"key": "Hindustan Unilever|2024|2|281", "is_claim": true, "verdict": "substantiated", "supporting": ["E3", "E5"], "note": "", "labelled_at": "2026-11-20T15:51:36"}
+{"key": "Wipro|2024|129|417", "is_claim": true, "verdict": "substantiated", "supporting": ["E2"], "note": "", "labelled_at": "2026-11-20T15:51:50"}
+{"key": "NTPC|2024|123|814", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:52:01"}
+{"key": "Hindustan Unilever|2024|91|261", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E3", "E5"], "note": "", "labelled_at": "2026-11-20T15:52:17"}
+{"key": "Wipro|2024|120|446", "is_claim": true, "verdict": "substantiated", "supporting": ["E4"], "note": "", "labelled_at": "2026-11-20T15:52:32"}
+{"key": "NTPC|2024|136|413", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:52:39"}
+{"key": "Hindustan Unilever|2024|147|977", "is_claim": true, "verdict": "substantiated", "supporting": ["E2", "E6"], "note": "", "labelled_at": "2026-11-20T15:52:56"}
+{"key": "Axis Bank|2024|60|598", "is_claim": true, "verdict": "substantiated", "supporting": ["E2", "E3"], "note": "", "labelled_at": "2026-11-20T15:53:36"}
+{"key": "Hindustan Unilever|2024|178|530", "is_claim": true, "verdict": "substantiated", "supporting": ["E2", "E3", "E4", "E5"], "note": "", "labelled_at": "2026-11-20T15:53:55"}
+{"key": "Hindustan Unilever|2024|178|907", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:54:18"}
+{"key": "NTPC|2024|133|887", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:54:28"}
+{"key": "Hindustan Unilever|2024|53|192", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:54:36"}
+{"key": "Tata Steel|2024|260|435", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E5", "E7"], "note": "", "labelled_at": "2026-11-20T15:54:54"}
+{"key": "Axis Bank|2024|125|1280", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:55:11"}
+{"key": "Tata Steel|2024|261|165", "is_claim": true, "verdict": "substantiated", "supporting": ["E6", "E7"], "note": "", "labelled_at": "2026-11-20T15:55:31"}
+{"key": "Tata Steel|2024|90|417", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:55:56"}
+{"key": "Wipro|2024|122|1113", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:56:20"}
+{"key": "Hindustan Unilever|2024|61|0", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:56:29"}
+{"key": "Hindustan Unilever|2024|58|1496", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:56:37"}
+{"key": "NTPC|2024|136|1081", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:56:52"}
+{"key": "Axis Bank|2024|142|1191", "is_claim": true, "verdict": "substantiated", "supporting": ["E2"], "note": "", "labelled_at": "2026-11-20T15:58:51"}
+{"key": "Wipro|2024|120|568", "is_claim": true, "verdict": "substantiated", "supporting": ["E6"], "note": "", "labelled_at": "2026-11-20T15:59:12"}
+{"key": "Hindustan Unilever|2024|1|621", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T15:59:20"}
+{"key": "Hindustan Unilever|2024|95|1297", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E2"], "note": "", "labelled_at": "2026-11-20T15:59:47"}
+{"key": "Tata Steel|2024|90|679", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E3"], "note": "", "labelled_at": "2026-11-20T16:00:03"}
+{"key": "Axis Bank|2024|142|734", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:00:20"}
+{"key": "Tata Steel|2024|125|0", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:00:33"}
+{"key": "NTPC|2024|145|461", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:00:48"}
+{"key": "Hindustan Unilever|2024|173|785", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:01:06"}
+{"key": "Hindustan Unilever|2024|177|308", "is_claim": true, "verdict": "substantiated", "supporting": ["E5"], "note": "", "labelled_at": "2026-11-20T16:01:22"}
+{"key": "Hindustan Unilever|2024|58|1023", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:01:30"}
+{"key": "Tata Steel|2024|269|828", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:01:37"}
+{"key": "Axis Bank|2024|142|1033", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:01:51"}
+{"key": "Axis Bank|2024|59|308", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:01:58"}
+{"key": "Tata Steel|2024|242|821", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:07:38"}
+{"key": "Tata Steel|2024|243|981", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:07:56"}
+{"key": "Axis Bank|2024|60|892", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E2"], "note": "", "labelled_at": "2026-11-20T16:08:15"}
+{"key": "Wipro|2024|56|360", "is_claim": true, "verdict": "substantiated", "supporting": ["E7"], "note": "", "labelled_at": "2026-11-20T16:08:39"}
+{"key": "Hindustan Unilever|2024|192|333", "is_claim": true, "verdict": "substantiated", "supporting": ["E3"], "note": "", "labelled_at": "2026-11-20T16:09:05"}
+{"key": "Wipro|2024|58|699", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E3"], "note": "", "labelled_at": "2026-11-20T16:09:23"}
+{"key": "Tata Steel|2024|49|1045", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:09:32"}
+{"key": "Tata Steel|2024|261|877", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:09:41"}
+{"key": "Tata Steel|2024|128|759", "is_claim": true, "verdict": "substantiated", "supporting": ["E3"], "note": "", "labelled_at": "2026-11-20T16:10:03"}
+{"key": "Wipro|2024|131|1176", "is_claim": true, "verdict": "substantiated", "supporting": ["E1"], "note": "", "labelled_at": "2026-11-20T16:10:20"}
+{"key": "Tata Steel|2024|243|737", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:10:33"}
+{"key": "Tata Steel|2024|255|1309", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:10:49"}
+{"key": "Axis Bank|2024|143|2", "is_claim": true, "verdict": "substantiated", "supporting": ["E4"], "note": "", "labelled_at": "2026-11-20T16:11:05"}
+{"key": "NTPC|2024|133|643", "is_claim": true, "verdict": "substantiated", "supporting": ["E8"], "note": "", "labelled_at": "2026-11-20T16:12:04"}
+{"key": "Hindustan Unilever|2024|178|1240", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E3", "E5"], "note": "", "labelled_at": "2026-11-20T16:12:23"}
+{"key": "Tata Steel|2024|258|0", "is_claim": true, "verdict": "substantiated", "supporting": ["E3", "E8"], "note": "", "labelled_at": "2026-11-20T16:12:40"}
+{"key": "Axis Bank|2024|101|1084", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:12:49"}
+{"key": "Axis Bank|2024|59|101", "is_claim": true, "verdict": "substantiated", "supporting": ["E1"], "note": "", "labelled_at": "2026-11-20T16:13:06"}
+{"key": "Axis Bank|2024|157|522", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:13:24"}
+{"key": "Hindustan Unilever|2024|178|1537", "is_claim": true, "verdict": "substantiated", "supporting": ["E3", "E4", "E5", "E6"], "note": "", "labelled_at": "2026-11-20T16:13:42"}
+{"key": "Hindustan Unilever|2024|3|462", "is_claim": true, "verdict": "substantiated", "supporting": ["E4", "E6"], "note": "", "labelled_at": "2026-11-20T16:14:07"}
+{"key": "Axis Bank|2024|126|0", "is_claim": true, "verdict": "substantiated", "supporting": ["E4", "E5"], "note": "", "labelled_at": "2026-11-20T16:14:24"}
+{"key": "Axis Bank|2024|59|1694", "is_claim": true, "verdict": "substantiated", "supporting": ["E4", "E6"], "note": "", "labelled_at": "2026-11-20T16:14:41"}
+{"key": "Axis Bank|2024|129|225", "is_claim": true, "verdict": "substantiated", "supporting": ["E5", "E6"], "note": "", "labelled_at": "2026-11-20T16:15:15"}
+{"key": "Tata Steel|2024|248|1236", "is_claim": true, "verdict": "substantiated", "supporting": ["E2"], "note": "", "labelled_at": "2026-11-20T16:15:34"}
+{"key": "Wipro|2024|78|633", "is_claim": true, "verdict": "substantiated", "supporting": ["E2", "E3"], "note": "", "labelled_at": "2026-11-20T16:21:36"}
+{"key": "Axis Bank|2024|99|821", "is_claim": true, "verdict": "substantiated", "supporting": ["E4"], "note": "", "labelled_at": "2026-11-20T16:21:46"}
+{"key": "NTPC|2024|146|1184", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:21:52"}
+{"key": "Hindustan Unilever|2024|58|1545", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:21:57"}
+{"key": "Hindustan Unilever|2024|58|105", "is_claim": true, "verdict": "substantiated", "supporting": ["E2"], "note": "", "labelled_at": "2026-11-20T16:22:08"}
+{"key": "Hindustan Unilever|2024|2|928", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E2"], "note": "", "labelled_at": "2026-11-20T16:22:19"}
+{"key": "Axis Bank|2024|147|323", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:22:28"}
+{"key": "Hindustan Unilever|2024|183|945", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:22:42"}
+{"key": "Wipro|2024|122|710", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:22:51"}
+{"key": "Axis Bank|2024|109|859", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:22:57"}
+{"key": "Hindustan Unilever|2024|100|2", "is_claim": true, "verdict": "substantiated", "supporting": ["E1", "E3", "E4"], "note": "", "labelled_at": "2026-11-20T16:23:14"}
+{"key": "Wipro|2024|132|129", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:23:24"}
+{"key": "Hindustan Unilever|2024|96|579", "is_claim": true, "verdict": "substantiated", "supporting": ["E1"], "note": "", "labelled_at": "2026-11-20T16:23:35"}
+{"key": "Hindustan Unilever|2024|92|840", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:23:50"}
+{"key": "NTPC|2024|133|318", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:23:56"}
+{"key": "NTPC|2024|133|443", "is_claim": true, "verdict": "substantiated", "supporting": ["E7"], "note": "", "labelled_at": "2026-11-20T16:24:06"}
+{"key": "NTPC|2024|146|843", "is_claim": true, "verdict": "unsupported", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:24:15"}
+{"key": "Wipro|2024|56|143", "is_claim": true, "verdict": "substantiated", "supporting": ["E2"], "note": "", "labelled_at": "2026-11-20T16:24:25"}
+{"key": "Hindustan Unilever|2024|89|753", "is_claim": true, "verdict": "substantiated", "supporting": ["E3", "E7"], "note": "", "labelled_at": "2026-11-20T16:24:39"}
+{"key": "Wipro|2024|90|452", "is_claim": true, "verdict": "vague", "supporting": [], "note": "", "labelled_at": "2026-11-20T16:24:44"}
+{"key": "Hindustan Unilever|2024|179|166", "is_claim": true, "verdict": "substantiated", "supporting": ["E5"], "note": "", "labelled_at": "2026-11-20T16:25:00"}

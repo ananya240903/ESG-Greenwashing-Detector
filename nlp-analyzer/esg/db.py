@@ -118,17 +118,30 @@ def text_chunks(conn: psycopg.Connection, report_id: int) -> list[dict]:
     ).fetchall()
 
 
+def report_passages(conn: psycopg.Connection, report_id: int) -> list[dict]:
+    """Every chunk of a report (text and tables) with its embedding: the evidence pool."""
+    return conn.execute(
+        "SELECT id, seq, kind, section, principle, page_start, text, embedding FROM chunks"
+        " WHERE report_id = %s AND embedding IS NOT NULL ORDER BY seq",
+        (report_id,),
+    ).fetchall()
+
+
 def save_analysis(
     conn: psycopg.Connection,
     report_id: int,
     baseline_rows: Sequence[tuple],
-    claim_rows: Sequence[tuple] | None,
+    claims: Sequence[dict] | None,
 ) -> None:
     """Replace a report's analysis atomically, so re-analysing a report is safe.
 
     baseline_rows: (chunk_id, esg_label, esg_score, tone_label, tone_score, risk_score, flagged)
-    claim_rows:    (chunk_id, sentence, char_start, char_end, claim_score, specificity_score,
-                    prominence, model); None leaves existing claims alone (models not trained).
+    claims: one dict per claim with chunk_id, sentence, char_start, char_end, claim_score,
+            specificity_score, prominence, model, and optionally
+            evidence: [(chunk_id, rank, retrieval_score, rerank_score)] and
+            verdict:  (label, confidence, reason, cited_chunk_ids, model).
+            None leaves existing claims alone (models not trained).
+    Evidence and verdicts are removed with their claims (ON DELETE CASCADE).
     """
     with conn.transaction():
         conn.execute(
@@ -142,13 +155,30 @@ def save_analysis(
                    VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                 baseline_rows,
             )
-            if claim_rows is not None:
+            if claims is not None:
                 cur.execute("DELETE FROM claims WHERE report_id = %s", (report_id,))
+                evidence, verdicts = [], []
+                for c in claims:
+                    claim_id = cur.execute(
+                        """INSERT INTO claims (report_id, chunk_id, sentence, char_start, char_end,
+                                               claim_score, specificity_score, prominence, model)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                        (report_id, c["chunk_id"], c["sentence"], c["char_start"], c["char_end"],
+                         c["claim_score"], c["specificity_score"], c["prominence"], c["model"]),
+                    ).fetchone()["id"]
+                    evidence += [(claim_id, *e) for e in c.get("evidence", ())]
+                    if c.get("verdict"):
+                        label, confidence, reason, cited, model = c["verdict"]
+                        verdicts.append((claim_id, label, confidence, reason, list(cited), model))
                 cur.executemany(
-                    """INSERT INTO claims (report_id, chunk_id, sentence, char_start, char_end,
-                                           claim_score, specificity_score, prominence, model)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                    [(report_id, *row) for row in claim_rows],
+                    """INSERT INTO evidence (claim_id, chunk_id, rank, retrieval_score, rerank_score)
+                       VALUES (%s, %s, %s, %s, %s)""",
+                    evidence,
+                )
+                cur.executemany(
+                    """INSERT INTO verdicts (claim_id, label, confidence, reason, cited_chunk_ids, model)
+                       VALUES (%s, %s, %s, %s, %s, %s)""",
+                    verdicts,
                 )
         conn.execute(
             "UPDATE reports SET status = 'ANALYZED', error = NULL, updated_at = now() WHERE id = %s",

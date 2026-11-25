@@ -1,0 +1,2 @@
+# Only for the labelling app (label_app.py); it needs no models.
+streamlit>=1.57,<2
