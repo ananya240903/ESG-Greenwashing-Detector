@@ -3,12 +3,7 @@
 Reads Indian BRSR (Business Responsibility and Sustainability Report) PDFs and checks whether a
 company's environmental claims are backed by evidence in the same report.
 
-> **Status:** All four phases are done. The pipeline parses real BRSR PDFs into section-aware chunks,
-> extracts environmental claims with fine-tuned classifiers, retrieves evidence for each claim
-> from the same report, and labels it substantiated, vague or unsupported with a cited reason.
-> Every stage is measured, against public datasets and a hand-labelled BRSR gold set, alongside
-> the original FinBERT heuristic as the baseline. A dashboard shows each report's claims with
-> their evidence and verdict.
+
 
 ## Architecture
 
