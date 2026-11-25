@@ -50,3 +50,14 @@ def test_drops_the_brsr_principle_statements():
             "PRINCIPLE 2 Businesses should provide goods and services in a manner that is sustainable and safe.\n"
             "Our businesses should be water positive by 2030, so we are investing in recharge projects.")
     assert texts(text) == ["Our businesses should be water positive by 2030, so we are investing in recharge projects."]
+
+
+def test_drops_unnumbered_brsr_form_questions_and_instructions():
+    text = "\n".join([
+        "Describe the processes in place to safely reclaim your products for reusing, recycling, and disposing.",
+        "Percentage of R&D and capital expenditure (capex) investments in specific technologies to improve impacts.",
+        "While the essential indicators are expected to be disclosed by every entity that is mandated to file this report.",
+        "Details of the energy consumption (in Joules or multiples) and energy intensity, in the following format.",
+        "We describe our water stewardship programme in detail on page 42 of the annual report.",
+    ])
+    assert texts(text) == ["We describe our water stewardship programme in detail on page 42 of the annual report."]

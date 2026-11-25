@@ -29,3 +29,12 @@ def embed_passages(texts: Sequence[str]) -> np.ndarray:
             f"{config.EMBED_MODEL} gives {vectors.shape[1]}-d vectors; the schema expects {config.EMBED_DIM}"
         )
     return vectors.astype(np.float32)
+
+
+# bge models expect this instruction on short queries (not on passages).
+QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
+
+
+def embed_queries(texts: Sequence[str]) -> np.ndarray:
+    """Like embed_passages, for search queries (claims)."""
+    return embed_passages([QUERY_INSTRUCTION + t for t in texts])

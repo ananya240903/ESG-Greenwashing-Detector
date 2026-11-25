@@ -35,6 +35,15 @@ _BULLET = re.compile(r"^\s*[•▪●◦‣\-–—*]\s*")
 # claim by the company.
 _TEMPLATE = re.compile(r"^(?:PRINCIPLE\s+\d+\s*[:.\-–]?\s*)?Businesses should\b", re.IGNORECASE)
 
+# Questions and instructions from the BRSR form itself, which companies often reprint
+# without their "EI-6." numbers ("Describe the processes in place to safely reclaim ...",
+# "Percentage of R&D and capex investments in specific technologies ...").
+_FORM_TEXT = re.compile(
+    r"^(?:Describe|Details of|Percentage of|Number of|Name of|List\b|Provide\b|Please\b|Whether\b|"
+    r"Does the entity|Do you|Has the entity|Have you|Is there|Are there|If yes|If not|"
+    r"This section is aimed|While the essential indicators|Disclosure Questions)",
+    re.IGNORECASE)
+
 
 @dataclass(frozen=True)
 class Sentence:
@@ -78,6 +87,8 @@ def _is_candidate(text: str) -> bool:
         return False  # a question or a lead-in to a table
     if _TEMPLATE.match(text):
         return False  # BRSR principle statement
+    if _FORM_TEXT.match(text):
+        return False  # a question or instruction from the BRSR form
     letters = [c for c in text if c.isalpha()]
     if len(letters) < 0.5 * len(text.replace(" ", "")):
         return False  # mostly numbers: a table row that leaked into prose

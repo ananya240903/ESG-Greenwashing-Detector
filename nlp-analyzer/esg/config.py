@@ -23,3 +23,16 @@ CLASSIFIER_BASE_MODEL = os.getenv("CLASSIFIER_BASE_MODEL", "climatebert/distilro
 CLAIM_MODEL_DIR = Path(os.getenv("CLAIM_MODEL_DIR", str(MODELS_DIR / "claims")))
 SPECIFICITY_MODEL_DIR = Path(os.getenv("SPECIFICITY_MODEL_DIR", str(MODELS_DIR / "specificity")))
 CLAIM_THRESHOLD = float(os.getenv("CLAIM_THRESHOLD", "0.5"))
+
+# Phase 3: evidence retrieval and verdicts.
+RERANK_MODEL = os.getenv("RERANK_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+NLI_MODEL = os.getenv("NLI_MODEL", "cross-encoder/nli-roberta-base")
+EVIDENCE_K = int(os.getenv("EVIDENCE_K", "3"))          # passages kept per claim
+RETRIEVAL_DEPTH = int(os.getenv("RETRIEVAL_DEPTH", "20"))  # candidates sent to the reranker
+# Verdict rule: the variant with the best macro F1 on the gold set's dev split
+# (nli+rerank-evidence-first; see eval/gold_metrics.md). Override any of them per run.
+VERDICT_ORDER = os.getenv("VERDICT_ORDER", "evidence_first")  # vague_first | evidence_first
+VAGUE_BELOW = float(os.getenv("VAGUE_BELOW", "0.05"))     # specificity under this = vague
+ENTAIL_AT = float(os.getenv("ENTAIL_AT", "0.2"))          # entailment at or above = support
+CONTRADICT_AT = float(os.getenv("CONTRADICT_AT", "0.7"))  # contradiction at or above = conflict
+RERANK_AT = None if os.getenv("RERANK_AT", "0").lower() == "none" else float(os.getenv("RERANK_AT", "0"))            # reranker logit at or above = support; "none" disables

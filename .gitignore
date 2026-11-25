@@ -22,3 +22,7 @@ data/
 
 # Fine-tuned models (rebuild with scripts/train_classifier.py)
 nlp-analyzer/models/
+
+# The hand-labelled gold set is data we keep
+!nlp-analyzer/eval/gold/*.jsonl
+nlp-analyzer/eval/.gold_scores_cache.json
