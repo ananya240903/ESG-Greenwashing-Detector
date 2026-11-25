@@ -44,8 +44,9 @@ class Verifier:
     @property
     def model_name(self) -> str:
         t = self.thresholds
+        rerank = "-" if t.rerank_at is None else f"{t.rerank_at:g}"
         return (f"{self.retriever.reranker.name}+{self.nli.name}"
-                f"@v{t.vague_below:g}/e{t.entail_at:g}/c{t.contradict_at:g}")
+                f"@{t.order}/v{t.vague_below:g}/e{t.entail_at:g}/c{t.contradict_at:g}/r{rerank}")
 
     def score_evidence(self, claims: Sequence[ClaimQuery], index: ReportIndex) -> list[list[tuple[Hit, EvidenceScore]]]:
         """Retrieve and NLI-score evidence; no thresholds involved, so results can be re-decided."""

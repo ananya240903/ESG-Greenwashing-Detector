@@ -7,7 +7,8 @@ company's environmental claims are backed by evidence in the same report.
 > extracts environmental claims with fine-tuned classifiers, retrieves evidence for each claim
 > from the same report, and labels it substantiated, vague or unsupported with a cited reason.
 > Every stage is measured, against public datasets and a hand-labelled BRSR gold set, alongside
-> the original FinBERT heuristic as the baseline. A dashboard comes next.
+> the original FinBERT heuristic as the baseline. A dashboard shows each report's claims with
+> their evidence and verdict.
 
 ## Architecture
 
@@ -72,6 +73,13 @@ curl http://127.0.0.1:8080/api/reports/1
 | `GET /api/reports?company=` | List reports, optionally filtered by company name |
 | `GET /api/reports/{id}` | One report and its status |
 | `POST /api/reports/{id}/reprocess` | Send a report through the pipeline again |
+| `GET /api/reports/risk` | Every analysed report with its verdict counts and risk score, riskiest first |
+| `GET /api/reports/{id}/claims?verdict=` | A report's claims in reading order, each with its verdict, cited reason and top 3 evidence passages; `verdict` filters to `substantiated`, `vague` or `unsupported` |
+
+The **dashboard** is at <http://127.0.0.1:8501>. The Overview page ranks the reports by risk score;
+select one to open its Report page, which lists every claim with its verdict, the reason, and the
+passages retrieved as evidence, with filters by verdict and a text search. It reads only from the
+API ([dashboard/](dashboard/)).
 
 Other ports: Postgres on `5432` (user/password/db `esg`), Kafdrop (Kafka UI) on `9000`.
 
@@ -182,13 +190,70 @@ these as lower bounds for comparing reports, not as findings about the companies
 | Wipro | 28 | 15 | 6 | 7 | 46.4 |
 | NTPC | 25 | 13 | 5 | 7 | 48.0 |
 
+## Worked example
+
+One claim from HUL's FY2023-24 BRSR, end to end. On page 32, under Principle 2, the report has a
+headline figure:
+
+> 94% Sustainable sourcing of paper and board
+
+1. **Parsing.** The parser puts it in a Section C, Principle 2 text chunk on page 32.
+2. **Claim extraction.** The claim classifier scores it 0.91, so it is kept as an environmental claim.
+   The specificity classifier gives 0.45: it has a figure, but it is a heading fragment, not a sentence.
+3. **Retrieval.** BM25 and vector search over the report's other chunks are fused, and the rest of
+   the claim's own chunk is added as a candidate. The reranker puts that chunk first (relevance 6.9).
+   It says *"we have achieved sustainable sourcing for 94% of our total paper and board, 81% of our
+   total tomatoes and 79% of our total tea procured during the calendar year 2023."* Second (4.1) is
+   the CEO's letter on page 3; third (3.5) is the director's statement on page 23.
+4. **Verdict.** NLI scores the top passage as entailing the claim (0.91), so the claim is
+   **substantiated**, with the reason *"Backed by text, Principle 2, p. 32 (entailment 0.91)."*
+   The hand label agrees.
+
+The same claim from the API (`GET /api/reports/2/claims`, trimmed):
+
+```json
+{
+  "id": 1456,
+  "sentence": "94% Sustainable sourcing of paper and board",
+  "location": { "kind": "text", "section": "C", "principle": 2, "page": 32 },
+  "claimScore": 0.914,
+  "specificityScore": 0.451,
+  "verdict": {
+    "label": "substantiated",
+    "confidence": 0.907,
+    "reason": "Backed by text, Principle 2, p. 32 (entailment 0.91).",
+    "citedChunkIds": [4901]
+  },
+  "evidence": [
+    { "rank": 1, "location": { "kind": "text", "section": "C", "principle": 2, "page": 32 },
+      "rerankScore": 6.94, "cited": true, "text": "48.1%* of key crops were sourced sustainably. ..." },
+    { "rank": 2, "location": { "kind": "text", "section": null, "principle": null, "page": 3 },
+      "rerankScore": 4.11, "cited": false, "text": "Chief Executive Officer and Managing Director ..." },
+    { "rank": 3, "location": { "kind": "text", "section": "B", "principle": null, "page": 23 },
+      "rerankScore": 3.49, "cited": false, "text": "We believe that corporates will need to play ..." }
+  ]
+}
+```
+
+**And one it gets wrong.** Wipro: *"We estimate that close to more than 50% of suppliers by value of
+business would be assessed for environmental impact."* The model calls it substantiated, citing a
+passage on page 33 (reranker relevance 2.8). That passage is the same sentence printed again in the
+report, so the claim is backing itself. The hand label is unsupported. 22 of the 304 substantiated
+verdicts (7%) cite a passage that contains the claim word for word. Dropping such passages from
+retrieval is the first fix in the list below.
+
 ## Roadmap
 
 1. **Foundation**: Postgres instead of H2 and `.jsonl`, one docker-compose, PDF parsing *(done)*
 2. **Claims**: fine-tuned claim and specificity classifiers, evaluation harness, baseline numbers *(done)*
 3. **Verification**: evidence retrieval (BM25 + pgvector + reranker), verdict model, hand-labelled gold set *(done)*
-4. **Surface**: dashboard, and a worked example with a metrics table
+4. **Surface**: dashboard, API for claims and risk, worked example *(done)*
 
-Next steps for the verdict stage, in order of expected gain: a careful second labeller to measure
-agreement properly; a numeric check that matches figures in a claim against the report's tables
-(the "words versus numbers" check in the plan); and an LLM judge as a comparison.
+Next steps for the verdict stage, in order of expected gain:
+
+1. Drop retrieved passages that contain the claim word for word, so a repeated sentence cannot
+   back itself (7% of substantiated verdicts today).
+2. A careful second labeller, to measure agreement properly.
+3. A numeric check that matches figures in a claim against the report's tables (the "words versus
+   numbers" check in the plan). NLI handles tables poorly.
+4. An LLM judge, as a comparison.
