@@ -24,13 +24,18 @@ public final class AnalysisViews {
                           String model) {
     }
 
-    /** A passage retrieved as possible support; cited = the verdict's reason points to it. */
+    /**
+     * A passage retrieved as possible support; cited = the verdict's reason points to it.
+     * ownPassage = the passage the claim itself comes from. The models saw it with the claim
+     * sentence cut out; text here is the whole passage, claim included.
+     */
     public record Evidence(long chunkId, int rank, Location location, String text,
-                           Double retrievalScore, Double rerankScore, boolean cited) {
+                           Double retrievalScore, Double rerankScore, boolean cited, boolean ownPassage) {
     }
 
+    /** topics: BRSR topic keys (ghg, water, energy, waste are SEBI BRSR Core attributes). */
     public record Claim(long id, String sentence, Location location, double claimScore,
-                        Double specificityScore, Double prominence, Verdict verdict,
+                        Double specificityScore, Double prominence, List<String> topics, Verdict verdict,
                         List<Evidence> evidence) {
     }
 

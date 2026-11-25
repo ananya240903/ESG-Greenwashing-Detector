@@ -3,7 +3,7 @@
 Reads Indian BRSR (Business Responsibility and Sustainability Report) PDFs and checks whether a
 company's environmental claims are backed by evidence in the same report.
 
-> **Status:** Phases 1–3 are done. The pipeline parses real BRSR PDFs into section-aware chunks,
+> **Status:** All four phases are done. The pipeline parses real BRSR PDFs into section-aware chunks,
 > extracts environmental claims with fine-tuned classifiers, retrieves evidence for each claim
 > from the same report, and labels it substantiated, vague or unsupported with a cited reason.
 > Every stage is measured, against public datasets and a hand-labelled BRSR gold set, alongside
@@ -161,17 +161,20 @@ intervals and the confusion matrix: [nlp-analyzer/eval/gold_metrics.md](nlp-anal
 |---|---|
 | Claim extraction: share of extracted sentences that are real claims | 0.73 (95% CI 0.66–0.78) |
 | Retrieval: a supporting passage in the top 3 (81 substantiated claims) | **0.91** with the reranker; 0.84 BM25, 0.83 vector |
-| Verdicts: macro F1 over the three labels (87 test claims) | 0.39–0.48 by rule variant; FinBERT baseline 0.26, majority class 0.23 |
+| Verdicts: macro F1 over the three labels (87 test claims) | **0.49** (95% CI 0.37–0.60) for the rule chosen on dev; 0.39–0.49 across variants; FinBERT baseline 0.26, majority class 0.23 |
 
 What this shows:
 
 - **Retrieval works.** Fusing BM25 with vector search and reranking finds the backing passage
   for 9 in 10 substantiated claims; the reranker lifts hit@3 from 0.86 (fused) to 0.91.
 - **Verdicts are the weak stage.** Every variant beats the baseline, but none is reliable. The
-  NLI model barely separates substantiated from unsupported claims (ROC AUC 0.62), largely because
-  much of the evidence is tables of figures, which NLI models are not trained on. The rule
-  selected on dev (evidence first, with NLI or reranker relevance counting as support) is
-  generous with "substantiated" and rarely calls a claim vague.
+  NLI model barely separates substantiated from unsupported claims (ROC AUC 0.60), largely because
+  much of the evidence is tables of figures, which NLI models are not trained on.
+- **Checking the numbers helps.** The rule chosen on dev checks evidence first, counting NLI
+  entailment, reranker relevance, or the claim's figures appearing elsewhere in the report as
+  support. Adding that words-versus-numbers check took test macro F1 from 0.39 to 0.49, and F1 on
+  the vague class from 0.07 to 0.29. The confidence intervals still overlap, so it is a gain, not
+  a settled one.
 - **The labels have limits.** One person labelled everything, at a median of 16 seconds per
   claim. A second pass over the test claims agreed with the first on 84% (Cohen's kappa 0.73),
   so the labels are consistent, but they were not checked carefully against every passage.
@@ -179,16 +182,25 @@ What this shows:
 ### Risk scores
 
 The share of each report's claims that are vague or unsupported, weighted so that headline
-claims in Section B count 1.5x. Given the verdict stage's bias towards "substantiated", treat
-these as lower bounds for comparing reports, not as findings about the companies.
+claims in Section B count 1.5x. With verdicts this uncertain, use the scores to compare reports
+and to find claims worth reading, not as findings about the companies.
 
 | Report | Claims | Substantiated | Vague | Unsupported | Risk score |
 |---|---|---|---|---|---|
-| HUL | 185 | 146 | 19 | 20 | 20.0 |
-| Axis Bank | 42 | 30 | 1 | 11 | 28.6 |
-| Tata Steel | 143 | 100 | 20 | 23 | 29.3 |
-| Wipro | 28 | 15 | 6 | 7 | 46.4 |
-| NTPC | 25 | 13 | 5 | 7 | 48.0 |
+| NTPC | 25 | 8 | 8 | 9 | 68.0 |
+| Wipro | 28 | 11 | 9 | 8 | 60.7 |
+| Axis Bank | 42 | 28 | 6 | 8 | 33.3 |
+| Tata Steel | 143 | 96 | 27 | 20 | 32.7 |
+| HUL | 185 | 126 | 37 | 22 | 30.9 |
+
+### Regulation tagging
+
+Each claim is tagged with the BRSR topics it is about. Four are attributes of SEBI's BRSR Core,
+the disclosures listed companies must have independently assured: GHG footprint, water footprint,
+energy footprint and embracing circularity. Of the 423 claims, 282 have at least one tag: waste
+and circularity 102, GHG 76, sustainable sourcing 62, energy 58, water 43, biodiversity 31. Tags
+come from keyword rules and are not evaluated. The dashboard shows each report's claims by topic,
+and `?topic=` filters the API.
 
 ## Worked example
 
@@ -201,59 +213,66 @@ headline figure:
 2. **Claim extraction.** The claim classifier scores it 0.91, so it is kept as an environmental claim.
    The specificity classifier gives 0.45: it has a figure, but it is a heading fragment, not a sentence.
 3. **Retrieval.** BM25 and vector search over the report's other chunks are fused, and the rest of
-   the claim's own chunk is added as a candidate. The reranker puts that chunk first (relevance 6.9).
+   the claim's own chunk (with the claim cut out) is added as a candidate. The reranker puts that
+   first (relevance 6.9).
    It says *"we have achieved sustainable sourcing for 94% of our total paper and board, 81% of our
    total tomatoes and 79% of our total tea procured during the calendar year 2023."* Second (4.1) is
    the CEO's letter on page 3; third (3.5) is the director's statement on page 23.
 4. **Verdict.** NLI scores the top passage as entailing the claim (0.91), so the claim is
    **substantiated**, with the reason *"Backed by text, Principle 2, p. 32 (entailment 0.91)."*
-   The hand label agrees.
+   The hand label agrees. It is tagged *sustainable sourcing*.
 
 The same claim from the API (`GET /api/reports/2/claims`, trimmed):
 
 ```json
 {
-  "id": 1456,
+  "id": 1879,
   "sentence": "94% Sustainable sourcing of paper and board",
   "location": { "kind": "text", "section": "C", "principle": 2, "page": 32 },
   "claimScore": 0.914,
   "specificityScore": 0.451,
+  "topics": ["sourcing"],
   "verdict": {
     "label": "substantiated",
     "confidence": 0.907,
     "reason": "Backed by text, Principle 2, p. 32 (entailment 0.91).",
-    "citedChunkIds": [4901]
+    "citedChunkIds": [6010]
   },
   "evidence": [
     { "rank": 1, "location": { "kind": "text", "section": "C", "principle": 2, "page": 32 },
-      "rerankScore": 6.94, "cited": true, "text": "48.1%* of key crops were sourced sustainably. ..." },
+      "rerankScore": 6.94, "cited": true, "ownPassage": true, "text": "48.1%* of key crops were sourced sustainably. ..." },
     { "rank": 2, "location": { "kind": "text", "section": null, "principle": null, "page": 3 },
-      "rerankScore": 4.11, "cited": false, "text": "Chief Executive Officer and Managing Director ..." },
+      "rerankScore": 4.11, "cited": false, "ownPassage": false, "text": "Chief Executive Officer and Managing Director ..." },
     { "rank": 3, "location": { "kind": "text", "section": "B", "principle": null, "page": 23 },
-      "rerankScore": 3.49, "cited": false, "text": "We believe that corporates will need to play ..." }
+      "rerankScore": 3.49, "cited": false, "ownPassage": false, "text": "We believe that corporates will need to play ..." }
   ]
 }
 ```
 
 **And one it gets wrong.** Wipro: *"We estimate that close to more than 50% of suppliers by value of
-business would be assessed for environmental impact."* The model calls it substantiated, citing a
-passage on page 33 (reranker relevance 2.8). That passage is the same sentence printed again in the
-report, so the claim is backing itself. The hand label is unsupported. 22 of the 304 substantiated
-verdicts (7%) cite a passage that contains the claim word for word. Dropping such passages from
-retrieval is the first fix in the list below.
+business would be assessed for environmental impact."* The model calls it substantiated because the
+rest of the claim's own passage scores 2.8 for relevance, just over the threshold of 2. That text
+is the BRSR question about value-chain assessment and a note on Wipro's natural capital valuation
+programme: on topic, but it does not back the 50% estimate. The hand label is unsupported.
+Reranker relevance measures topic, not support, which is why it is a weak signal on its own.
+
+A related failure is fixed: reports often print the same sentence twice, and 22 substantiated
+verdicts (7%) used to cite a passage that repeated the claim word for word. Retrieval now cuts the
+claim out of any passage that contains it, and none do.
 
 ## Roadmap
 
 1. **Foundation**: Postgres instead of H2 and `.jsonl`, one docker-compose, PDF parsing *(done)*
 2. **Claims**: fine-tuned claim and specificity classifiers, evaluation harness, baseline numbers *(done)*
 3. **Verification**: evidence retrieval (BM25 + pgvector + reranker), verdict model, hand-labelled gold set *(done)*
-4. **Surface**: dashboard, API for claims and risk, worked example *(done)*
+4. **Surface**: dashboard, API for claims and risk, worked example, words-versus-numbers check,
+   regulation tagging *(done)*
 
-Next steps for the verdict stage, in order of expected gain:
+Next steps, in order of expected gain:
 
-1. Drop retrieved passages that contain the claim word for word, so a repeated sentence cannot
-   back itself (7% of substantiated verdicts today).
-2. A careful second labeller, to measure agreement properly.
-3. A numeric check that matches figures in a claim against the report's tables (the "words versus
-   numbers" check in the plan). NLI handles tables poorly.
-4. An LLM judge, as a comparison.
+1. A careful second labeller, to measure label agreement properly and give the verdict numbers
+   a firmer footing.
+2. A stricter support signal than reranker relevance, which rewards text on the same topic (the
+   Wipro example). For example, require NLI entailment or a figure match for "substantiated".
+3. An LLM judge, as a comparison with the NLI model.
+4. Topic labels in the gold set, to evaluate the regulation tagging.

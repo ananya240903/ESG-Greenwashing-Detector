@@ -31,6 +31,7 @@ from esg import db
 from esg.eval import gold
 from esg.eval.metrics import binary_metrics
 from esg.retrieval.search import ClaimQuery
+from esg.verdict.numbers import NumberCheck
 from esg.verdict.rules import EvidenceScore, Thresholds, decide
 from esg.verdict.verify import Verifier, build_index
 
@@ -50,7 +51,12 @@ FAMILIES = {
                            "what": "NLI evidence check first, then vague"},
     "nli+rerank-evidence-first": {"order": "evidence_first", "rerank_at": [-2.0, 0.0, 2.0, 4.0, 6.0, 8.0],
                                   "what": "Evidence first; NLI or reranker relevance counts as support"},
+    "nli+rerank+numbers": {"order": "evidence_first", "rerank_at": [None, -2.0, 0.0, 2.0, 4.0, 6.0, 8.0],
+                           "use_numbers": True,
+                           "what": "As above, plus words vs numbers: the claim's figures found elsewhere in the "
+                                   "report count as support, and figures found nowhere make it unsupported"},
 }
+RETRIEVAL_VERSION = "2"  # bump when retrieval changes, so cached evidence scores are not reused
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -105,12 +111,13 @@ CACHE = Path("eval/.gold_scores_cache.json")  # not committed; delete to force a
 
 def score_claims(claims: list[gold.GoldClaim], verifier: Verifier, use_cache: bool = False) -> dict[str, dict]:
     """Live evidence + NLI scores for every gold claim, plus the baseline flag of its chunk."""
-    stamp = f"{verifier.retriever.reranker.name}|{verifier.nli.name}"
+    stamp = f"{verifier.retriever.reranker.name}|{verifier.nli.name}|retrieval-v{RETRIEVAL_VERSION}"
     if use_cache and CACHE.exists():
         cached = json.loads(CACHE.read_text())
         if cached["models"] == stamp and set(cached["scores"]) >= {c.key for c in claims}:
             log.info("Using cached evidence scores from %s", CACHE)
             return {k: {"evidence": [EvidenceScore(**e) for e in v["evidence"]],
+                        "numbers": NumberCheck(*(tuple(x) for x in v["numbers"])),
                         "baseline_flagged": v["baseline_flagged"]} for k, v in cached["scores"].items()}
     conn = db.connect()
     out = {}
@@ -128,12 +135,16 @@ def score_claims(claims: list[gold.GoldClaim], verifier: Verifier, use_cache: bo
             """SELECT ch.seq, b.flagged FROM baseline_scores b JOIN chunks ch ON ch.id = b.chunk_id
                WHERE ch.report_id = %s""", (report["id"],)).fetchall()}
         queries = [ClaimQuery(seq_to_id[c.chunk_seq], c.sentence, c.char_start, c.char_end) for c in rows]
-        scored = verifier.score_evidence(queries, build_index(passages))
-        for c, row in zip(rows, scored):
-            out[c.key] = {"evidence": [s for _, s in row], "baseline_flagged": bool(flagged.get(c.chunk_seq))}
+        index = build_index(passages)
+        scored = verifier.score_evidence(queries, index)
+        for c, q, row in zip(rows, queries, scored):
+            out[c.key] = {"evidence": [s for _, s in row], "numbers": verifier.number_check(q, index),
+                          "baseline_flagged": bool(flagged.get(c.chunk_seq))}
         log.info("%s FY%s: scored %d claims", company, fy, len(rows))
     CACHE.write_text(json.dumps({"models": stamp, "scores": {
-        k: {"evidence": [vars(e) for e in v["evidence"]], "baseline_flagged": v["baseline_flagged"]}
+        k: {"evidence": [vars(e) for e in v["evidence"]],
+            "numbers": [list(v["numbers"].figures), list(v["numbers"].found_in), list(v["numbers"].found_labels)],
+            "baseline_flagged": v["baseline_flagged"]}
         for k, v in out.items()}}))
     return out
 
@@ -143,14 +154,17 @@ def describe(th: Thresholds) -> str:
              "no contradiction" if th.contradict_at > 1 else f"contradict ≥ {th.contradict_at}"]
     if th.rerank_at is not None:
         parts.append(f"rerank ≥ {th.rerank_at:g}")
+    if th.use_numbers:
+        parts.append("numbers on")
     return ", ".join(parts)
 
 
-def tune(claims, spec, scores, order: str, rerank_grid) -> tuple[Thresholds, float]:
+def tune(claims, spec, scores, order: str, rerank_grid, use_numbers: bool = False) -> tuple[Thresholds, float]:
     best, best_f1 = None, -1.0
     for v, e, k, r in itertools.product(*GRID.values(), rerank_grid):
-        th = Thresholds(v, e, k, rerank_at=r, order=order)
-        pred = [decide(spec[c.key], scores[c.key]["evidence"], th).label for c in claims]
+        th = Thresholds(v, e, k, rerank_at=r, order=order, use_numbers=use_numbers)
+        pred = [decide(spec[c.key], scores[c.key]["evidence"], th, scores[c.key]["numbers"]).label
+                for c in claims]
         f1 = f1_score([c.verdict for c in claims], pred, labels=LABELS, average="macro", zero_division=0)
         if f1 > best_f1 + 1e-9:
             best, best_f1 = th, f1
@@ -209,15 +223,16 @@ def main() -> None:
     spec = {c.key: items[c.key]["specificity_score"] for c in claims}
     y_test = [c.verdict for c in test]
     majority = Counter(c.verdict for c in dev).most_common(1)[0][0]
-    default = Thresholds(0.5, 0.5, 0.8, rerank_at=None, order="vague_first")
+    default = Thresholds(0.5, 0.5, 0.8, rerank_at=None, order="vague_first", use_numbers=False)
     tuned = {}
     for name, fam in FAMILIES.items():
-        tuned[name] = tune(dev, spec, scores, fam["order"], fam["rerank_at"])
+        tuned[name] = tune(dev, spec, scores, fam["order"], fam["rerank_at"], fam.get("use_numbers", False))
         log.info("%s: dev macro F1 %.3f with %s", name, tuned[name][1], describe(tuned[name][0]))
     selected = max(tuned, key=lambda n: tuned[n][1])
 
     def predict(th):
-        return [decide(spec[c.key], scores[c.key]["evidence"], th).label for c in test]
+        return [decide(spec[c.key], scores[c.key]["evidence"], th, scores[c.key]["numbers"]).label
+                for c in test]
 
     systems = {
         "majority": ("Always the most common dev label", [majority] * len(test)),
@@ -235,7 +250,7 @@ def main() -> None:
     report["selected"] = selected
     report["tuned_thresholds"] = {name: {"vague_below": th.vague_below, "entail_at": th.entail_at,
                                          "contradict_at": th.contradict_at, "rerank_at": th.rerank_at,
-                                         "order": th.order, "dev_macro_f1": f1}
+                                         "order": th.order, "use_numbers": th.use_numbers, "dev_macro_f1": f1}
                                   for name, (th, f1) in tuned.items()}
 
     # Diagnostics over all claims: how well does each evidence signal separate substantiated

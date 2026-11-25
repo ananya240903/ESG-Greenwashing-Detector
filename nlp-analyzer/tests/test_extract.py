@@ -42,6 +42,7 @@ def test_keeps_claims_above_threshold_with_offsets_and_scores():
         assert text[c.sentence.start:c.sentence.end] == c.sentence.text
     assert [round(c.specificity_score, 1) for c in claims] == [0.2, 0.8]
     assert [c.prominence for c in claims] == [1.5, 1.0]
+    assert [c.topics for c in claims] == [("ghg",), ("water",)]
 
 
 def test_specificity_runs_only_on_kept_claims():

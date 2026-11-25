@@ -85,3 +85,22 @@ def test_nli_windows_cover_long_passages_with_overlap():
     assert w[0].split()[0] == "w0" and w[-1].split()[-1] == "w249"
     assert all(len(x.split()) <= 110 for x in w)
     assert "w100" in w[0] and "w100" in w[1]  # windows overlap
+
+
+def test_a_repeated_claim_cannot_back_itself():
+    from esg.retrieval.search import without_claim
+    claim = "We estimate that more than 50% of suppliers would be assessed for environmental impact."
+    copy = ("Percentage of value chain partners assessed.\nWe estimate that more than  50% of suppliers "
+            "would be assessed for\nenvironmental impact. We engaged with 57 suppliers on carbon disclosure.")
+    rest = without_claim(copy, claim)
+    assert "We estimate" not in rest and "57 suppliers" in rest
+    assert without_claim("Scope 1 emissions fell 12%.", claim) is None
+
+    passages = [Passage(1, 0, "text", "C", 6, 33, "Context. " + claim),
+                Passage(2, 1, "text", "C", 6, 33, copy),
+                Passage(3, 2, "text", "C", 6, 34, claim)]   # nothing but the repeat
+    emb = np.eye(3, dtype=np.float32)
+    q = ClaimQuery(chunk_id=1, text=claim, start=9, end=9 + len(claim))
+    hits = ReportIndex(passages, emb).hybrid(q, np.ones(3, dtype=np.float32), depth=5)
+    assert [h.passage.chunk_id for h in hits] == [2]            # pure repeat dropped, own chunk excluded
+    assert "We estimate" not in hits[0].text and "57 suppliers" in hits[0].text

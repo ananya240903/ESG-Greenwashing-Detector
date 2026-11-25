@@ -54,8 +54,8 @@ with right, st.container(border=True):
         alt="Table of reports with risk score and claim counts by verdict",
     )
     if event.selection.rows:
-        chosen = int(df.iloc[event.selection.rows[0]]["reportId"])
-        st.switch_page("app_pages/report.py", query_params={"report": str(chosen)})
+        chosen = df.iloc[event.selection.rows[0]]["report"]
+        st.switch_page("app_pages/report.py", query_params={"report": chosen})
 
 st.caption("Risk score = 100 × (prominence of vague + unsupported claims) / (prominence of all claims). "
            "Claims in Section B, where the director's statement and headline commitments sit, count 1.5×.")

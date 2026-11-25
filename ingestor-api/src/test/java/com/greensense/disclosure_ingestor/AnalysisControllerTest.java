@@ -20,8 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -69,13 +69,13 @@ class AnalysisControllerTest {
     @Test
     void claimsComeWithVerdictAndEvidence() throws Exception {
         var evidence = new Evidence(91, 1, new Location("table", "A", null, 8), "| Trees planted | 39 million |",
-                0.03, 6.2, true);
+                0.03, 6.2, true, false);
         var claim = new Claim(7, "We have planted 39 million trees so far.", new Location("text", "C", 6, 31),
-                0.98, 1.0, 1.0,
+                0.98, 1.0, 1.0, List.of("biodiversity"),
                 new Verdict("substantiated", 0.94, "Backed by table, Section A, p. 8 (entailment 0.94).",
                         List.of(91L), "m"),
                 List.of(evidence));
-        when(analysis.claims(reportId, null)).thenReturn(List.of(claim));
+        when(analysis.claims(reportId, null, null)).thenReturn(List.of(claim));
         when(analysis.risk(reportId)).thenReturn(Optional.of(new ReportRisk(reportId, "NTPC", 2024, 1, 1, 0, 0, 0)));
 
         mvc.perform(get("/api/reports/{id}/claims", reportId))
@@ -84,17 +84,22 @@ class AnalysisControllerTest {
                 .andExpect(jsonPath("$.risk.claims").value(1))
                 .andExpect(jsonPath("$.claims[0].verdict.label").value("substantiated"))
                 .andExpect(jsonPath("$.claims[0].location.principle").value(6))
+                .andExpect(jsonPath("$.claims[0].topics[0]").value("biodiversity"))
                 .andExpect(jsonPath("$.claims[0].evidence[0].cited").value(true))
+                .andExpect(jsonPath("$.claims[0].evidence[0].ownPassage").value(false))
                 .andExpect(jsonPath("$.claims[0].evidence[0].location.page").value(8));
     }
 
     @Test
     void verdictFilterIsPassedThroughAndValidated() throws Exception {
-        when(analysis.claims(reportId, "vague")).thenReturn(List.of());
-        mvc.perform(get("/api/reports/{id}/claims", reportId).param("verdict", "vague"))
+        when(analysis.claims(reportId, "vague", "water")).thenReturn(List.of());
+        mvc.perform(get("/api/reports/{id}/claims", reportId).param("verdict", "vague").param("topic", "water"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.claims").isEmpty());
-        verify(analysis).claims(reportId, "vague");
+        verify(analysis).claims(reportId, "vague", "water");
+
+        mvc.perform(get("/api/reports/{id}/claims", reportId).param("topic", "unicorns"))
+                .andExpect(status().isBadRequest());
 
         mvc.perform(get("/api/reports/{id}/claims", reportId).param("verdict", "greenwashed"))
                 .andExpect(status().isBadRequest());
@@ -103,6 +108,6 @@ class AnalysisControllerTest {
     @Test
     void unknownReportIs404() throws Exception {
         mvc.perform(get("/api/reports/{id}/claims", 999_999)).andExpect(status().isNotFound());
-        verify(analysis, never()).claims(anyLong(), anyString());
+        verify(analysis, never()).claims(anyLong(), any(), any());
     }
 }

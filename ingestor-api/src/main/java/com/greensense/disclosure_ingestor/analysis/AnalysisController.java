@@ -34,14 +34,23 @@ public class AnalysisController {
         return analysis.risk();
     }
 
-    /** A report's claims in reading order; ?verdict=vague|unsupported|substantiated filters them. */
+    static final Set<String> TOPICS = Set.of("ghg", "water", "energy", "waste", "biodiversity", "air", "sourcing");
+
+    /**
+     * A report's claims in reading order. ?verdict=vague|unsupported|substantiated and
+     * ?topic=ghg|water|energy|waste|biodiversity|air|sourcing filter them.
+     */
     @GetMapping("/{id}/claims")
-    public ReportClaims claims(@PathVariable long id, @RequestParam(required = false) String verdict) {
+    public ReportClaims claims(@PathVariable long id, @RequestParam(required = false) String verdict,
+                               @RequestParam(required = false) String topic) {
         if (verdict != null && !VERDICTS.contains(verdict)) {
             throw new IllegalArgumentException("verdict must be one of " + VERDICTS);
         }
+        if (topic != null && !TOPICS.contains(topic)) {
+            throw new IllegalArgumentException("topic must be one of " + TOPICS);
+        }
         Report report = reports.get(id);  // 404 when the report does not exist
         return new ReportClaims(report.getId(), report.getCompany(), report.getFiscalYear(),
-                analysis.risk(id).orElse(null), analysis.claims(id, verdict));
+                analysis.risk(id).orElse(null), analysis.claims(id, verdict, topic));
     }
 }

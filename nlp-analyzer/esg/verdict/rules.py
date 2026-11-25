@@ -18,6 +18,10 @@ Support: P(entailment) >= entail_at for some passage, or, when rerank_at is set,
 reranker relevance score >= rerank_at. NLI models are trained on prose and often miss
 support in tables of figures; the reranker is a second, independent signal.
 
+Words versus numbers (use_numbers): when every figure in the claim also appears elsewhere in
+the report, that counts as support; when the claim has figures and none appears elsewhere, it
+is unsupported rather than vague (see numbers.py).
+
 Kept separate from the model code so the rules can be unit-tested and the thresholds tuned
 on the gold set without re-running any model.
 """
@@ -28,6 +32,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from .. import config
+from .numbers import NumberCheck
 
 
 @dataclass(frozen=True)
@@ -37,6 +42,7 @@ class Thresholds:
     contradict_at: float = config.CONTRADICT_AT
     rerank_at: float | None = config.RERANK_AT       # None: the reranker does not count as support
     order: str = config.VERDICT_ORDER                 # vague_first | evidence_first
+    use_numbers: bool = config.USE_NUMBERS            # the words-versus-numbers check
 
 
 @dataclass(frozen=True)
@@ -62,7 +68,8 @@ def _vague(specificity: float) -> Verdict:
                    f"or concrete actions), and no retrieved passage backs it.", ())
 
 
-def _check_evidence(evidence: Sequence[EvidenceScore], th: Thresholds) -> Verdict | None:
+def _check_evidence(evidence: Sequence[EvidenceScore], th: Thresholds,
+                    numbers: NumberCheck | None = None) -> Verdict | None:
     """Substantiated or contradicted, or None when the evidence settles nothing."""
     best = max(evidence, key=lambda e: e.entailment, default=None)
     worst = max(evidence, key=lambda e: e.contradiction, default=None)
@@ -79,15 +86,24 @@ def _check_evidence(evidence: Sequence[EvidenceScore], th: Thresholds) -> Verdic
         if top and top.rerank >= th.rerank_at:
             return Verdict("substantiated", best.entailment if best else 0.0,
                            f"Backed by {top.label} (reranker relevance {top.rerank:.1f}).", (top.chunk_id,))
+    if th.use_numbers and numbers is not None and numbers.all_found:
+        cited = tuple(dict.fromkeys(c for c in numbers.found_in if c is not None))
+        return Verdict("substantiated", best.entailment if best else 0.0,
+                       f"Its figures ({', '.join(numbers.figures)}) also appear in "
+                       f"{numbers.found_labels[0]}.", cited)
     return None
 
 
-def decide(specificity: float, evidence: Sequence[EvidenceScore], th: Thresholds = Thresholds()) -> Verdict:
+def decide(specificity: float, evidence: Sequence[EvidenceScore], th: Thresholds = Thresholds(),
+           numbers: NumberCheck | None = None) -> Verdict:
     if th.order == "vague_first" and specificity < th.vague_below:
         return _vague(specificity)
-    settled = _check_evidence(evidence, th)
+    settled = _check_evidence(evidence, th, numbers)
     if settled:
         return settled
+    if th.use_numbers and numbers is not None and numbers.none_found:
+        return Verdict("unsupported", 1.0,
+                       f"Its figures ({', '.join(numbers.figures)}) appear nowhere else in the report.", ())
     if specificity < th.vague_below:
         return _vague(specificity)
     best = max(evidence, key=lambda e: e.entailment, default=None)

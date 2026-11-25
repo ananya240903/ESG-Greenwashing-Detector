@@ -7,6 +7,11 @@
 The claim's own chunk is left out of BM25 and vector search: it contains the claim, so it
 would always win. What else that chunk says can still be evidence, so the rest of it (with
 the claim sentence cut out) is added to the reranker's candidates.
+
+Reports often print the same sentence twice (a summary box and the body text, or an answer
+repeated under two questions). A retrieved passage that contains the claim word for word gets
+the same treatment: the claim is cut out and only the rest can count as evidence, so a claim
+can never back itself.
 """
 
 from __future__ import annotations
@@ -15,6 +20,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from functools import cached_property
 
+import re
+
 import numpy as np
 
 from .. import config
@@ -22,6 +29,20 @@ from .bm25 import BM25
 
 RRF_K = 60  # the usual constant from Cormack et al. (2009)
 MIN_CONTEXT_WORDS = 12
+
+
+def without_claim(text: str, claim: str) -> str | None:
+    """text with every copy of the claim cut out, or None when it does not contain the claim.
+
+    Matching ignores case and whitespace differences, which PDF extraction introduces.
+    """
+    words = claim.split()
+    if not words:
+        return None
+    pattern = re.compile(r"\s+".join(re.escape(w) for w in words), re.IGNORECASE)
+    if not pattern.search(text):
+        return None
+    return re.sub(r"\s{2,}", " ", pattern.sub(" ", text)).strip()
 
 
 @dataclass(frozen=True)
@@ -88,8 +109,14 @@ class ReportIndex:
         for ranking in (self.bm25_ranking(claim, 3 * depth), self.vector_ranking(claim, query_vec, 3 * depth)):
             for rank, i in enumerate(ranking):
                 fused[i] = fused.get(i, 0.0) + 1.0 / (RRF_K + rank + 1)
-        top = sorted(fused, key=lambda i: -fused[i])[:depth]
-        return [Hit(self.passages[i], self.passages[i].text, rrf=fused[i]) for i in top]
+        hits = []
+        for i in sorted(fused, key=lambda i: -fused[i])[:depth]:
+            p = self.passages[i]
+            rest = without_claim(p.text, claim.text)
+            if rest is not None and len(rest.split()) < MIN_CONTEXT_WORDS:
+                continue  # little but the claim itself: a repeat, not evidence
+            hits.append(Hit(p, p.text if rest is None else rest, rrf=fused[i]))
+        return hits
 
     def context(self, claim: ClaimQuery) -> Hit | None:
         """The claim's own chunk with the claim cut out, if enough is left to be evidence."""

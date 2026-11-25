@@ -30,9 +30,10 @@ NLI_MODEL = os.getenv("NLI_MODEL", "cross-encoder/nli-roberta-base")
 EVIDENCE_K = int(os.getenv("EVIDENCE_K", "3"))          # passages kept per claim
 RETRIEVAL_DEPTH = int(os.getenv("RETRIEVAL_DEPTH", "20"))  # candidates sent to the reranker
 # Verdict rule: the variant with the best macro F1 on the gold set's dev split
-# (nli+rerank-evidence-first; see eval/gold_metrics.md). Override any of them per run.
+# (nli+rerank+numbers; see eval/gold_metrics.md). Override any of them per run.
 VERDICT_ORDER = os.getenv("VERDICT_ORDER", "evidence_first")  # vague_first | evidence_first
+USE_NUMBERS = os.getenv("USE_NUMBERS", "true").lower() in ("1", "true", "yes")  # words-vs-numbers check
 VAGUE_BELOW = float(os.getenv("VAGUE_BELOW", "0.05"))     # specificity under this = vague
-ENTAIL_AT = float(os.getenv("ENTAIL_AT", "0.2"))          # entailment at or above = support
-CONTRADICT_AT = float(os.getenv("CONTRADICT_AT", "0.7"))  # contradiction at or above = conflict
-RERANK_AT = None if os.getenv("RERANK_AT", "0").lower() == "none" else float(os.getenv("RERANK_AT", "0"))            # reranker logit at or above = support; "none" disables
+ENTAIL_AT = float(os.getenv("ENTAIL_AT", "0.3"))          # entailment at or above = support
+CONTRADICT_AT = float(os.getenv("CONTRADICT_AT", "0.8"))  # contradiction at or above = conflict
+RERANK_AT = None if os.getenv("RERANK_AT", "2").lower() == "none" else float(os.getenv("RERANK_AT", "2"))            # reranker logit at or above = support; "none" disables

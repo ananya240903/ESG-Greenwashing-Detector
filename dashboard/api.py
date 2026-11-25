@@ -49,3 +49,15 @@ def report_name(r: dict) -> str:
 def where(location: dict) -> str:
     part = f"Principle {location['principle']}" if location.get("principle") else f"Section {location.get('section') or '-'}"
     return f"{location['kind']}, {part}, p. {location['page']}"
+
+# BRSR topics a claim can be tagged with (mirrors nlp-analyzer/esg/claims/topics.py).
+# brsr_core: the SEBI BRSR Core attribute, for topics that companies must have assured.
+TOPICS = {
+    "ghg": {"label": "GHG emissions", "brsr_core": "GHG footprint"},
+    "water": {"label": "Water", "brsr_core": "Water footprint"},
+    "energy": {"label": "Energy", "brsr_core": "Energy footprint"},
+    "waste": {"label": "Waste and circularity", "brsr_core": "Embracing circularity"},
+    "biodiversity": {"label": "Biodiversity and land", "brsr_core": None},
+    "air": {"label": "Air pollution", "brsr_core": None},
+    "sourcing": {"label": "Sustainable sourcing", "brsr_core": None},
+}
