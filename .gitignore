@@ -1,7 +1,6 @@
 # Java
 target/
 *.class
-.mvn/
 
 # Python
 __pycache__/
@@ -20,3 +19,6 @@ venv/
 # Data: uploaded/downloaded PDFs and generated output stay out of git
 data/
 *.jsonl
+
+# Fine-tuned models (rebuild with scripts/train_classifier.py)
+nlp-analyzer/models/

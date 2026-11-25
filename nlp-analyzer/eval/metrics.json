@@ -1,0 +1,119 @@
+{
+  "tasks": {
+    "claims": {
+      "dataset": "climatebert/environmental_claims",
+      "n": 265,
+      "positives": 67,
+      "model": {
+        "name": "claims-distilroberta-base-climate-f",
+        "base_model": "climatebert/distilroberta-base-climate-f",
+        "train_rows": 2117,
+        "validation_rows": 265,
+        "epochs": 4,
+        "lr": 3e-05,
+        "max_length": 128,
+        "seed": 42,
+        "best_epoch": 2,
+        "train_minutes": 13.8
+      },
+      "systems": {
+        "finbert-esg": {
+          "n": 265,
+          "positives": 67,
+          "precision": 0.4632352941176471,
+          "recall": 0.9402985074626866,
+          "f1": 0.6206896551724138,
+          "macro_f1": 0.6926078245281029,
+          "accuracy": 0.7094339622641509,
+          "roc_auc": 0.851575456053068,
+          "f1_ci95": [
+            0.5380601495551552,
+            0.6871957671957671
+          ],
+          "description": "FinBERT-ESG top label is Environmental"
+        },
+        "claims-distilroberta-base-climate-f": {
+          "n": 265,
+          "positives": 67,
+          "precision": 0.775,
+          "recall": 0.9253731343283582,
+          "f1": 0.8435374149659864,
+          "macro_f1": 0.8917425978224188,
+          "accuracy": 0.9132075471698113,
+          "roc_auc": 0.9699231117141565,
+          "f1_ci95": [
+            0.7760594836038784,
+            0.8994396332144676
+          ],
+          "description": "Fine-tuned climatebert/distilroberta-base-climate-f"
+        }
+      }
+    },
+    "specificity": {
+      "dataset": "climatebert/climate_specificity",
+      "n": 320,
+      "positives": 123,
+      "model": {
+        "name": "specificity-distilroberta-base-climate-f",
+        "base_model": "climatebert/distilroberta-base-climate-f",
+        "train_rows": 850,
+        "validation_rows": 150,
+        "epochs": 5,
+        "lr": 3e-05,
+        "max_length": 256,
+        "seed": 42,
+        "best_epoch": 4,
+        "train_minutes": 24.6
+      },
+      "systems": {
+        "finbert-flag": {
+          "n": 320,
+          "positives": 123,
+          "precision": 0.3769968051118211,
+          "recall": 0.959349593495935,
+          "f1": 0.5412844036697247,
+          "macro_f1": 0.28044612340348984,
+          "accuracy": 0.375,
+          "roc_auc": 0.6060831166687302,
+          "f1_ci95": [
+            0.4770854847963282,
+            0.5924399353528983
+          ],
+          "description": "Old tool's flag (vague and hyped) = not specific"
+        },
+        "finbert-vague": {
+          "n": 320,
+          "positives": 123,
+          "precision": 0.3531746031746032,
+          "recall": 0.7235772357723578,
+          "f1": 0.4746666666666667,
+          "macro_f1": 0.3656352201257862,
+          "accuracy": 0.384375,
+          "roc_auc": 0.604349799843176,
+          "f1_ci95": [
+            0.40768326278304107,
+            0.5313443455185277
+          ],
+          "description": "FinBERT-ESG unsure (None or < 0.7) = not specific"
+        },
+        "specificity-distilroberta-base-climate-f": {
+          "n": 320,
+          "positives": 123,
+          "precision": 0.8058252427184466,
+          "recall": 0.6747967479674797,
+          "f1": 0.7345132743362832,
+          "macro_f1": 0.7947928690521996,
+          "accuracy": 0.8125,
+          "roc_auc": 0.8797408278651314,
+          "f1_ci95": [
+            0.6604606654055859,
+            0.7929553395108613
+          ],
+          "description": "Fine-tuned climatebert/distilroberta-base-climate-f"
+        }
+      }
+    }
+  },
+  "generated": "2026-11-19",
+  "git_commit": "38f2f73"
+}

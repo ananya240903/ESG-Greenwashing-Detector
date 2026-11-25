@@ -16,3 +16,10 @@ EMBED_BATCH = int(os.getenv("EMBED_BATCH", "32"))
 
 ESG_MODEL = os.getenv("ESG_MODEL", "yiyanghkust/finbert-esg")
 TONE_MODEL = os.getenv("TONE_MODEL", "ProsusAI/finbert")
+
+# Phase 2: fine-tuned claim and specificity classifiers (scripts/train_classifier.py).
+MODELS_DIR = Path(os.getenv("MODELS_DIR", "models"))
+CLASSIFIER_BASE_MODEL = os.getenv("CLASSIFIER_BASE_MODEL", "climatebert/distilroberta-base-climate-f")
+CLAIM_MODEL_DIR = Path(os.getenv("CLAIM_MODEL_DIR", str(MODELS_DIR / "claims")))
+SPECIFICITY_MODEL_DIR = Path(os.getenv("SPECIFICITY_MODEL_DIR", str(MODELS_DIR / "specificity")))
+CLAIM_THRESHOLD = float(os.getenv("CLAIM_THRESHOLD", "0.5"))
