@@ -11,7 +11,8 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..embedding import embed_queries
-from ..retrieval.search import ClaimQuery, Hit, Passage, ReportIndex, Retriever
+from ..retrieval.search import ClaimQuery, Hit, Passage, ReportIndex, Retriever, without_claim
+from . import numbers
 from .nli import NLI
 from .rules import EvidenceScore, Thresholds, Verdict, decide
 
@@ -44,8 +45,23 @@ class Verifier:
     @property
     def model_name(self) -> str:
         t = self.thresholds
+        rerank = "-" if t.rerank_at is None else f"{t.rerank_at:g}"
         return (f"{self.retriever.reranker.name}+{self.nli.name}"
-                f"@v{t.vague_below:g}/e{t.entail_at:g}/c{t.contradict_at:g}")
+                f"@{t.order}/v{t.vague_below:g}/e{t.entail_at:g}/c{t.contradict_at:g}/r{rerank}"
+                + ("/numbers" if t.use_numbers else ""))
+
+    @staticmethod
+    def number_check(claim: ClaimQuery, index: ReportIndex) -> numbers.NumberCheck:
+        """Words versus numbers: the claim's figures, searched for in the rest of the report
+        (tables first, so a match is cited from a table where one exists)."""
+        search = []
+        for p in sorted(index.passages, key=lambda p: (p.kind != "table", p.seq)):
+            text = p.text
+            if p.chunk_id == claim.chunk_id:
+                text = text[:claim.start] + " " + text[claim.end:]
+            rest = without_claim(text, claim.text)  # a repeated copy of the claim is not evidence
+            search.append((p.chunk_id, p.label, text if rest is None else rest))
+        return numbers.check(claim.text, search)
 
     def score_evidence(self, claims: Sequence[ClaimQuery], index: ReportIndex) -> list[list[tuple[Hit, EvidenceScore]]]:
         """Retrieve and NLI-score evidence; no thresholds involved, so results can be re-decided."""
@@ -84,6 +100,7 @@ class Verifier:
                 out.append(Checked(hits, [], decide(spec, [], self.thresholds)))
             else:
                 row = next(scored)
+                nums = self.number_check(claim, index) if self.thresholds.use_numbers else None
                 out.append(Checked([h for h, _ in row], [s for _, s in row],
-                                   decide(spec, [s for _, s in row], self.thresholds)))
+                                   decide(spec, [s for _, s in row], self.thresholds, nums)))
         return out

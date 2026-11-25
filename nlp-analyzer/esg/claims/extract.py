@@ -17,6 +17,7 @@ from pathlib import Path
 from .. import config
 from .classifier import TextClassifier, model_exists
 from .sentences import Sentence, split_sentences
+from .topics import tag
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class Claim:
     claim_score: float
     specificity_score: float
     prominence: float
+    topics: tuple[str, ...] = ()   # BRSR topics (topics.py), e.g. ("ghg", "water")
 
 
 class ClaimExtractor:
@@ -59,7 +61,7 @@ class ClaimExtractor:
         if not kept:
             return []
         spec_p = self.specificity.predict_proba([s.text for _, s, _ in kept])
-        return [Claim(c["id"], s, p, float(sp), prominence(c.get("section")))
+        return [Claim(c["id"], s, p, float(sp), prominence(c.get("section")), tuple(tag(s.text)))
                 for (c, s, p), sp in zip(kept, spec_p)]
 
 

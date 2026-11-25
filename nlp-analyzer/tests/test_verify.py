@@ -31,7 +31,7 @@ class StubNLI:
 
 def run(order, monkeypatch):
     monkeypatch.setattr(verify, "embed_queries", lambda texts: np.ones((len(texts), 3), dtype=np.float32))
-    v = verify.Verifier(StubRetriever(), StubNLI(), Thresholds(0.5, 0.5, 0.8, rerank_at=None, order=order))
+    v = verify.Verifier(StubRetriever(), StubNLI(), Thresholds(0.5, 0.5, 0.8, rerank_at=None, order=order, use_numbers=False))
     return [c.verdict.label for c in v.check(CLAIMS, [0.1, 0.9], INDEX)]
 
 

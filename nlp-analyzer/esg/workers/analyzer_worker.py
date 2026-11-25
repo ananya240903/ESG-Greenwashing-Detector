@@ -36,7 +36,7 @@ def claim_records(conn, report_id: int, chunks: list[dict], extractor: ClaimExtr
             "chunk_id": c.chunk_id, "sentence": c.sentence.text,
             "char_start": c.sentence.start, "char_end": c.sentence.end,
             "claim_score": c.claim_score, "specificity_score": c.specificity_score,
-            "prominence": c.prominence, "model": extractor.model_name,
+            "prominence": c.prominence, "topics": list(c.topics), "model": extractor.model_name,
             "evidence": [(h.passage.chunk_id, rank, h.rrf, h.rerank) for rank, h in enumerate(ch.evidence, 1)],
             "verdict": (v.label, v.confidence, v.reason, v.cited_chunk_ids, verifier.model_name),
         })

@@ -137,7 +137,7 @@ def save_analysis(
 
     baseline_rows: (chunk_id, esg_label, esg_score, tone_label, tone_score, risk_score, flagged)
     claims: one dict per claim with chunk_id, sentence, char_start, char_end, claim_score,
-            specificity_score, prominence, model, and optionally
+            specificity_score, prominence, model, and optionally topics,
             evidence: [(chunk_id, rank, retrieval_score, rerank_score)] and
             verdict:  (label, confidence, reason, cited_chunk_ids, model).
             None leaves existing claims alone (models not trained).
@@ -161,10 +161,11 @@ def save_analysis(
                 for c in claims:
                     claim_id = cur.execute(
                         """INSERT INTO claims (report_id, chunk_id, sentence, char_start, char_end,
-                                               claim_score, specificity_score, prominence, model)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                                               claim_score, specificity_score, prominence, topics, model)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                         (report_id, c["chunk_id"], c["sentence"], c["char_start"], c["char_end"],
-                         c["claim_score"], c["specificity_score"], c["prominence"], c["model"]),
+                         c["claim_score"], c["specificity_score"], c["prominence"],
+                         list(c.get("topics", ())), c["model"]),
                     ).fetchone()["id"]
                     evidence += [(claim_id, *e) for e in c.get("evidence", ())]
                     if c.get("verdict"):

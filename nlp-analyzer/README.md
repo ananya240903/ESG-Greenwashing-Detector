@@ -22,6 +22,7 @@ esg/
     chunker.py    ~200-word prose chunks and row-sliced tables that never cross a principle boundary
   claims/
     sentences.py  chunk text -> candidate sentences with offsets; drops BRSR questions, template text, fragments
+    topics.py     regulation tagging: BRSR topics per claim (four are SEBI BRSR Core attributes)
     classifier.py loads a fine-tuned classifier and returns P(label = 1)
     extract.py    sentences -> claim classifier -> specificity classifier -> prominence
   retrieval/
@@ -29,6 +30,7 @@ esg/
     search.py     BM25 + vector search, reciprocal rank fusion, cross-encoder reranking
   verdict/
     nli.py        NLI entailment/contradiction over ~110-word windows of each passage
+    numbers.py    words versus numbers: are the claim's figures anywhere else in the report?
     rules.py      scores -> substantiated / vague / unsupported, with a cited reason
     verify.py     claims -> evidence -> verdicts for one report (worker and evaluation share it)
   eval/
@@ -112,6 +114,28 @@ For each claim, candidate evidence comes from the claim's own report:
 4. A **cross-encoder** (`cross-encoder/ms-marco-MiniLM-L-6-v2`) reranks the candidates; the
    top 3 are stored in `evidence`.
 
+Reports often print the same sentence twice. A retrieved passage that contains the claim word
+for word has the claim cut out before reranking and NLI, and is dropped if little else is left,
+so a claim can never be its own evidence.
+
+## Words versus numbers
+
+[esg/verdict/numbers.py](esg/verdict/numbers.py) pulls the figures out of a claim (`94%`,
+`39 million`, `2,928.07`, `3,80,000`) and looks for each one in the rest of the report, tables
+first, leaving out the claim and any copy of it. Bare years and small whole numbers ("Scope 1")
+do not count as figures. It needs no model, which matters because NLI reads tables poorly. When
+the check is on (`USE_NUMBERS`), a claim whose figures all appear elsewhere is substantiated,
+citing where; a claim with figures that appear nowhere else is unsupported, not vague.
+
+## Regulation tagging
+
+[esg/claims/topics.py](esg/claims/topics.py) tags each claim with the BRSR topics it is about,
+stored in `claims.topics`. Four are attributes of SEBI's BRSR Core, the disclosures listed
+companies must have independently assured: GHG footprint, water footprint, energy footprint and
+embracing circularity (waste). The others are biodiversity and land, air pollution, and
+sustainable sourcing. Tags come from keyword rules, so each can be traced to the word that set
+it; they are not evaluated, since the gold set has no topic labels.
+
 ## Verdicts
 
 An NLI model (`cross-encoder/nli-roberta-base`) scores each evidence passage against the
@@ -120,15 +144,17 @@ on short premises, and a passage scores the highest entailment and contradiction
 windows. [esg/verdict/rules.py](esg/verdict/rules.py) turns the scores into a verdict with a
 cited reason, checking in this order:
 
-1. **Unsupported:** a passage contradicts the claim (P ≥ 0.7) more strongly than any passage
+1. **Unsupported:** a passage contradicts the claim (P ≥ 0.8) more strongly than any passage
    supports it. The reason cites the contradicting passage.
-2. **Substantiated:** a passage supports it, either NLI entailment ≥ 0.2 or reranker relevance
-   ≥ 0. The reason cites that passage.
-3. **Vague:** nothing supports it and specificity < 0.05.
-4. **Unsupported:** nothing supports it.
+2. **Substantiated:** something supports it: NLI entailment ≥ 0.3, reranker relevance ≥ 2, or
+   every figure in the claim appearing elsewhere in the report (words versus numbers, below).
+   The reason cites the passage.
+3. **Unsupported:** the claim has figures and none of them appears anywhere else in the report.
+4. **Vague:** nothing supports it and specificity < 0.05.
+5. **Unsupported:** nothing supports it.
 
 These settings were chosen on the gold set's dev split (`VERDICT_ORDER`, `VAGUE_BELOW`,
-`ENTAIL_AT`, `CONTRADICT_AT`, `RERANK_AT`). The report risk score is the Postgres view
+`ENTAIL_AT`, `CONTRADICT_AT`, `RERANK_AT`, `USE_NUMBERS`). The report risk score is the Postgres view
 `report_risk`: the prominence-weighted share of a report's claims that are vague or
 unsupported ([db/init/002_report_risk.sql](../db/init/002_report_risk.sql)).
 

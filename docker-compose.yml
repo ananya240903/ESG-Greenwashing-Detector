@@ -2,6 +2,8 @@
 #
 #   ingestor-api  --report.uploaded-->  parser-worker  --report.parsed-->  analyzer-worker
 #        \______________________ Postgres + pgvector ______________________/
+#        ^
+#   dashboard (Streamlit, :8501) reads claims, evidence and risk through the API
 #
 # Kafka messages carry only {"reportId": N}; PDFs sit in the shared `reports` volume.
 
@@ -94,6 +96,15 @@ services:
       - hf-cache:/models
       # Fine-tuned claim/specificity classifiers from scripts/train_classifier.py
       - ./nlp-analyzer/models:/app/models:ro
+
+  # Risk per report, and each report's claims with evidence and verdicts. Reads only the API.
+  dashboard:
+    build: ./dashboard
+    restart: unless-stopped
+    depends_on: [ingestor-api]
+    environment:
+      API_URL: http://ingestor-api:8080
+    ports: ["8501:8501"]
 
   # One-off jobs on the worker image, with the code mounted so results land on the host:
   #   docker compose run --rm tools python -m scripts.train_classifier --task claims

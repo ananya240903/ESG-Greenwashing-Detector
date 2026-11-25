@@ -1,6 +1,6 @@
 {
   "generated": "2026-11-25",
-  "git_commit": "0dd6fee",
+  "git_commit": "84ce940",
   "labelled": 200,
   "claims": 145,
   "dev": 58,
@@ -230,24 +230,24 @@
       "description": "Vague check first, then NLI; tuned on dev (vague < 0.05, entail \u2265 0.2, contradict \u2265 0.8), dev F1 0.32",
       "n": 87,
       "accuracy": 0.40229885057471265,
-      "macro_f1": 0.39781305114638443,
+      "macro_f1": 0.3990105132962276,
       "macro_f1_ci95": [
-        0.2862280589649292,
-        0.5041825043904422
+        0.2889675976679969,
+        0.5048130800589816
       ],
       "f1_per_class": {
-        "substantiated": 0.2962962962962963,
+        "substantiated": 0.2909090909090909,
         "vague": 0.45714285714285713,
-        "unsupported": 0.44
+        "unsupported": 0.4489795918367347
       },
       "flag": {
         "n": 87,
         "positives": 42,
-        "precision": 0.5256410256410257,
-        "recall": 0.9761904761904762,
-        "f1": 0.6833333333333333,
-        "macro_f1": 0.4898148148148148,
-        "accuracy": 0.5632183908045977
+        "precision": 0.5194805194805194,
+        "recall": 0.9523809523809523,
+        "f1": 0.6722689075630253,
+        "macro_f1": 0.4815889992360581,
+        "accuracy": 0.5517241379310345
       },
       "confusion": [
         [
@@ -256,9 +256,9 @@
           13
         ],
         [
-          0,
+          1,
           16,
-          4
+          3
         ],
         [
           1,
@@ -270,36 +270,36 @@
     "nli-evidence-first": {
       "description": "NLI evidence check first, then vague; tuned on dev (vague < 0.05, entail \u2265 0.2, contradict \u2265 0.8), dev F1 0.39",
       "n": 87,
-      "accuracy": 0.4827586206896552,
-      "macro_f1": 0.4759259259259259,
+      "accuracy": 0.47126436781609193,
+      "macro_f1": 0.46732026143790845,
       "macro_f1_ci95": [
-        0.3662255991678094,
-        0.5863942833911874
+        0.358702056204956,
+        0.5802257224824336
       ],
       "f1_per_class": {
-        "substantiated": 0.5277777777777778,
-        "vague": 0.4,
-        "unsupported": 0.5
+        "substantiated": 0.5,
+        "vague": 0.39215686274509803,
+        "unsupported": 0.5098039215686274
       },
       "flag": {
         "n": 87,
         "positives": 42,
-        "precision": 0.5666666666666667,
-        "recall": 0.8095238095238095,
-        "f1": 0.6666666666666666,
-        "macro_f1": 0.5972222222222222,
-        "accuracy": 0.6091954022988506
+        "precision": 0.55,
+        "recall": 0.7857142857142857,
+        "f1": 0.6470588235294118,
+        "macro_f1": 0.5735294117647058,
+        "accuracy": 0.5862068965517241
       },
       "confusion": [
         [
-          19,
-          13,
+          18,
+          14,
           13
         ],
         [
-          6,
+          7,
           10,
-          4
+          3
         ],
         [
           2,
@@ -309,27 +309,27 @@
       ]
     },
     "nli+rerank-evidence-first": {
-      "description": "Evidence first; NLI or reranker relevance counts as support; tuned on dev (vague < 0.05, entail \u2265 0.2, contradict \u2265 0.7, rerank \u2265 0), dev F1 0.52 **(selected on dev)**",
+      "description": "Evidence first; NLI or reranker relevance counts as support; tuned on dev (vague < 0.05, entail \u2265 0.2, contradict \u2265 0.7, rerank \u2265 0), dev F1 0.52",
       "n": 87,
       "accuracy": 0.5057471264367817,
-      "macro_f1": 0.38862841055595027,
+      "macro_f1": 0.3901709401709402,
       "macro_f1_ci95": [
-        0.2886908939014202,
-        0.477037460899827
+        0.2893885281385281,
+        0.479020979020979
       ],
       "f1_per_class": {
-        "substantiated": 0.6601941747572816,
+        "substantiated": 0.6538461538461539,
         "vague": 0.06666666666666667,
-        "unsupported": 0.43902439024390244
+        "unsupported": 0.45
       },
       "flag": {
         "n": 87,
         "positives": 42,
-        "precision": 0.6206896551724138,
-        "recall": 0.42857142857142855,
-        "f1": 0.5070422535211268,
-        "macro_f1": 0.5836182141392041,
-        "accuracy": 0.5977011494252874
+        "precision": 0.6071428571428571,
+        "recall": 0.40476190476190477,
+        "f1": 0.4857142857142857,
+        "macro_f1": 0.5697802197802198,
+        "accuracy": 0.5862068965517241
       },
       "confusion": [
         [
@@ -338,9 +338,9 @@
           6
         ],
         [
-          15,
+          16,
           1,
-          4
+          3
         ],
         [
           9,
@@ -348,9 +348,50 @@
           9
         ]
       ]
+    },
+    "nli+rerank+numbers": {
+      "description": "As above, plus words vs numbers: the claim's figures found elsewhere in the report count as support, and figures found nowhere make it unsupported; tuned on dev (vague < 0.05, entail \u2265 0.3, contradict \u2265 0.8, rerank \u2265 2, numbers on), dev F1 0.54 **(selected on dev)**",
+      "n": 87,
+      "accuracy": 0.5287356321839081,
+      "macro_f1": 0.4865540963101938,
+      "macro_f1_ci95": [
+        0.37314023455058093,
+        0.6025162703534914
+      ],
+      "f1_per_class": {
+        "substantiated": 0.6373626373626373,
+        "vague": 0.2857142857142857,
+        "unsupported": 0.5365853658536586
+      },
+      "flag": {
+        "n": 87,
+        "positives": 42,
+        "precision": 0.6097560975609756,
+        "recall": 0.5952380952380952,
+        "f1": 0.6024096385542169,
+        "macro_f1": 0.6198861379584271,
+        "accuracy": 0.6206896551724138
+      },
+      "confusion": [
+        [
+          29,
+          10,
+          6
+        ],
+        [
+          12,
+          6,
+          2
+        ],
+        [
+          5,
+          6,
+          11
+        ]
+      ]
     }
   },
-  "selected": "nli+rerank-evidence-first",
+  "selected": "nli+rerank+numbers",
   "tuned_thresholds": {
     "nli-vague-first": {
       "vague_below": 0.05,
@@ -358,6 +399,7 @@
       "contradict_at": 0.8,
       "rerank_at": null,
       "order": "vague_first",
+      "use_numbers": false,
       "dev_macro_f1": 0.3167277167277167
     },
     "nli-evidence-first": {
@@ -366,6 +408,7 @@
       "contradict_at": 0.8,
       "rerank_at": null,
       "order": "evidence_first",
+      "use_numbers": false,
       "dev_macro_f1": 0.39151804866090584
     },
     "nli+rerank-evidence-first": {
@@ -374,12 +417,22 @@
       "contradict_at": 0.7,
       "rerank_at": 0.0,
       "order": "evidence_first",
+      "use_numbers": false,
       "dev_macro_f1": 0.5238095238095238
+    },
+    "nli+rerank+numbers": {
+      "vague_below": 0.05,
+      "entail_at": 0.3,
+      "contradict_at": 0.8,
+      "rerank_at": 2.0,
+      "order": "evidence_first",
+      "use_numbers": true,
+      "dev_macro_f1": 0.5382714641424796
     }
   },
   "support_signal_auc": {
-    "max_entailment": 0.6213991769547326,
-    "max_rerank": 0.618312757201646,
+    "max_entailment": 0.5953360768175583,
+    "max_rerank": 0.5936213991769548,
     "n": 117
   },
   "models": {
